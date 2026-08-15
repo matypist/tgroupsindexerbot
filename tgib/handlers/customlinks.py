@@ -336,11 +336,17 @@ class CustomLinks:
         if not is_link_data or not is_directory_data:
             return False
         label = link_data.get("i18n_it_label") or link_data.get("i18n_en_label") or str(link_id)
-        directory_name = directory_data.get("i18n_it_name") or directory_data.get("i18n_en_name") or str(directory_id)
-        target = link_data.get("url") or f"Telegram group {link_data.get('chat_id')}"
-        summary = (f"🔗 <b>{label}</b> [<code>{link_id}</code>]"
-                   f"\n📂 <b>{directory_name}</b> [<code>{directory_id}</code>]"
-                   f"\n🌐 <code>{target}</code>")
+        full_category_name = DirectoryTable.get_full_category_name("en", directory_id) or str(directory_id)
+        if link_data.get("chat_id") is not None:
+            target_summary = f"💬 Telegram chat [<code>{link_data['chat_id']}</code>]"
+        else:
+            target_summary = f"🌐 {link_data.get('url')}"
+
+        category_icon = "🎯" if action == "index_link" else "🗑"
+        summary = (f"🔗 \"{label}\" [<code>{link_id}</code>]"
+                   f"\n\n{target_summary}"
+                   f"\n\n{category_icon} \"{full_category_name}\" "
+                   f"[<code>{directory_id}</code>]")
         return await Logger.log_custom_link_action(action, admin, summary)
 
     @classmethod
@@ -427,21 +433,23 @@ class CustomLinks:
             return locale.get_string("database_error_menu.text"), InlineKeyboardMarkup([])
 
         new_target = url if url is not None else f"Telegram chat [{chat_id}]"
+        target_icon = "🌐" if url is not None else "💬"
         if is_new_link:
             link_summary = (f"🆔 {link_id}"
                             f"\n\n🇮🇹 {input_data['i18n_it_label']}"
                             f"\n\n🇬🇧 {input_data['i18n_en_label']}"
-                            f"\n\n🌐 {new_target}")
+                            f"\n\n{target_icon} {new_target}")
         else:
             old_link_data = input_data["old_link_data"]
             old_target = old_link_data["url"] if old_link_data["url"] is not None \
                 else f"Telegram chat [{old_link_data['chat_id']}]"
+            old_target_icon = "🌐" if old_link_data["url"] is not None else "💬"
             link_summary = f"🆔 {link_id}"
 
             for icon, old_value, new_value in (
                     ("🇮🇹", old_link_data["i18n_it_label"], input_data["i18n_it_label"]),
                     ("🇬🇧", old_link_data["i18n_en_label"], input_data["i18n_en_label"]),
-                    ("🌐", old_target, new_target)):
+                    (old_target_icon, old_target, new_target)):
                 link_summary += f"\n\n{icon} {old_value}"
                 if old_value != new_value:
                     link_summary += f"\n      ↪️ {new_value}"

@@ -136,7 +136,8 @@ class Logger:
         if not cls.admin_actions_log_chat_id:
             return False
 
-        text = "👮‍♂️ <b><u>" + action.upper() + "</u></b> (#admin)"
+        action_label = action.replace("_", " ").upper()
+        text = "👮‍♂️ <b><u>" + action_label + "</u></b> (#admin)"
         text += "\n\n✍️ " + cls.gen_user_info_string(admin)
         text += "\n\n" + changes_summary
 
