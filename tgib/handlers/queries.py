@@ -25,7 +25,7 @@ import pytz
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, ChatMember, Bot, ChatMemberAdministrator, ChatMemberOwner, User
 from telegram.ext import CallbackContext, ContextTypes
 
-from tgib.data.database import DirectoryTable, AccountTable, ChatTable, SessionTable
+from tgib.data.database import DirectoryTable, AccountTable, ChatTable, SessionTable, CustomLinkTable
 from tgib.i18n.locales import Locale
 from tgib.global_vars import GlobalVariables
 from tgib.logs import Logger
@@ -719,9 +719,15 @@ class Queries:
                                 curr_sub_directory_btn_text = curr_sub_directory_name
 
                                 if not curr_sub_directory_data["hidden_by"]:
-                                    number_of_groups, is_number_of_groups = DirectoryTable.get_chats_count(curr_sub_directory_id)
-                                    if is_number_of_groups:
-                                        curr_sub_directory_btn_text += f" [{number_of_groups}]"
+                                    number_of_groups, is_number_of_groups = DirectoryTable.get_chats_count(
+                                        curr_sub_directory_id
+                                    )
+                                    number_of_links, is_number_of_links = CustomLinkTable.get_directory_links_count(
+                                        curr_sub_directory_id
+                                    )
+                                    if is_number_of_groups and is_number_of_links:
+                                        indexed_items_count = number_of_groups + number_of_links
+                                        curr_sub_directory_btn_text += f" [{indexed_items_count}]"
                                 else:
                                     curr_sub_directory_btn_text = "🥷 " + curr_sub_directory_btn_text
 

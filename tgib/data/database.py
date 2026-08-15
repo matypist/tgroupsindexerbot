@@ -1975,6 +1975,62 @@ class CustomLinkTable:
             return None, False
 
     @classmethod
+    def get_directory_links_count(cls, directory_id: int,
+                                  ignore_hidden_directories: bool = True) -> (int | None, bool):
+        cursor, iscursor = Database.get_cursor()
+
+        if iscursor:
+            cursor: psycopg2._psycopg.cursor
+
+            try:
+                hidden_directory_filter = "AND directory.hidden_by IS NULL" \
+                    if ignore_hidden_directories else ""
+                cursor.execute(
+                    f"""
+                    WITH RECURSIVE subdirectories AS (
+                        SELECT id FROM directory WHERE id = %s
+                        UNION
+                        SELECT directory.id
+                        FROM directory
+                        INNER JOIN subdirectories
+                            ON directory.parent_id = subdirectories.id
+                        WHERE TRUE {hidden_directory_filter}
+                    )
+                    SELECT COUNT(*)
+                    FROM custom_link_directory
+                    INNER JOIN subdirectories
+                        ON subdirectories.id = custom_link_directory.directory_id
+                    INNER JOIN custom_link
+                        ON custom_link.id = custom_link_directory.link_id
+                    LEFT JOIN chat
+                        ON chat.chat_id = custom_link.chat_id
+                    WHERE custom_link.chat_id IS NULL OR (
+                        chat.chat_id IS NOT NULL
+                        AND chat.hidden_by IS NULL
+                        AND chat.directory_id IS NOT NULL
+                        AND chat.missing_permissions = FALSE
+                        AND COALESCE(chat.custom_link, chat.invite_link) IS NOT NULL
+                    )
+                    """,
+                    (directory_id,)
+                )
+
+                count = cursor.fetchone()[0]
+                return count, True
+
+            except (Exception, psycopg2.DatabaseError) as ex:
+                Logger.log("exception", "CustomLinkTable.get_directory_links_count",
+                           f"An exception occurred while counting custom links in directory "
+                           f"'{directory_id}' and its subdirectories", ex)
+                Database.connection.rollback()
+                return None, False
+
+        Logger.log("error", "CustomLinkTable.get_directory_links_count",
+                   f"Couldn't get cursor required to count custom links in directory "
+                   f"'{directory_id}' and its subdirectories")
+        return None, False
+
+    @classmethod
     def get_directory_links(cls, directory_id: int) -> (dict | None, bool):
         cursor, iscursor = Database.get_cursor()
 
