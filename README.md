@@ -1,108 +1,350 @@
 # Telegram Groups Indexer Bot
 
-## About the project
+[![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](LICENSE)
+[![Python](https://img.shields.io/badge/Python-3.11-blue.svg)](Pipfile)
 
-The "Telegram Groups Indexer Bot" ([TGroupsIndexerBot](https://github.com/matypist/tgroupsindexerbot)) project was born out of the need, in its time by the "Sapienza Students" organization, and today by the [Sapienza Students Network](https://github.com/sapienzastudentsnetwork/sapienzastudentsnetwork.github.io) organization, to promote and make the Telegram groups of students of different courses and their different subjects more easily discoverable from other prospective students.
+**Telegram Groups Indexer Bot** (**TGroupsIndexerBot**) is a Telegram bot for organizing groups into browsable categories and making them easier to discover.
 
-### Demo
+The project was originally created for the former **Sapienza Students** organization and is now used by [Sapienza Students Network](https://github.com/SapienzaStudentsNetwork) to help university students find Telegram groups related to degree programmes, courses, and subjects.
 
-A live demo of the "Telegram Groups Indexer Bot" is available for you to try out. You can access it directly through this [link to @SapienzaStudentsBot](https://telegram.me/SapienzaStudentsBot), where you can explore the various features of the bot and see how it helps prospective students discover and join Telegram groups related to their courses and subjects at the university. The bot provides an easy-to-use interface, allowing users to quickly search for relevant groups based on their field of study, course, or subject, making the process of connecting with other students more efficient and streamlined.
+## Features
 
-### Current project status
+- Browse indexed groups through a hierarchy of categories and subcategories
+- Add the bot to a group and request indexing in an appropriate category
+- Move or remove indexed groups, subject to the requesting user's permissions
+- Create, rename, hide, show, and delete categories through the bot interface
+- Keep group metadata, administrators, ownership, invite links, and permissions synchronized
+- Hide groups from indexing when moderation is required
+- Manage bot administrators and per-user restrictions
+- Display user and group status information
+- Use localized interfaces in English and Italian
+- Store persistent data in PostgreSQL
+- Log exceptions and administrative actions to optional Telegram chats
 
-This first version lays the foundations for indexing in particular with regard to the listing of indexed groups to bot users, but there is still a long way to go, since the main functionality, which consists of the bot's users being able to add the bot to a group and autonomously make the group indexed by choosing a category (e.g. a degree course) and a sub-category, is still to be implemented.
+## Demo
 
-🔔 Keep up to date with updates to this GitHub repository by joining https://t.me/TGroupsIndexerBotGit
+A live instance of Telegram Groups Indexer Bot is available at [@SapienzaStudentsBot](https://t.me/SapienzaStudentsBot)
 
-## Deploy your own instance
+You can use it to explore the bot's interface and see how categories and subcategories make Telegram groups for degree programmes, courses, and individual subjects easier to discover. The guided menus let students browse the available directories, find a relevant community, and join it without having to search through scattered invite links.
 
-### Prerequisites
+The demo also shows the group-indexing workflow from an administrator's point of view: after adding the bot to a group and granting the required permissions, an authorized administrator can choose the most appropriate category and submit or move the group directly through the bot interface.
 
-1. Create your bot instance on BotFather
+The public instance is managed by [Sapienza Students Network](https://github.com/SapienzaStudentsNetwork). Its categories, moderation policies, available features, and configuration may differ from those of a self-hosted instance.
 
-    1. Start https://t.me/BotFather on Telegram
+## Project status
 
-    2. Send `/newbot` to https://t.me/BotFather on Telegram
+The core indexing workflow is implemented: authorized group administrators can add the bot to a group, grant the required permissions, and index or move the group through the category browser.
 
-    3. Follow the prompts to choose a name and username for your bot instance
+The project is actively usable, but APIs, database migrations, commands, and deployment details may still evolve. Review the commit history before upgrading a production instance.
 
-    4. Once you are done following the instructions, you should receive a token in the final confirmation message, that will be your TOKEN value
+Repository update notifications are published on [@TGroupsIndexerBotGit](https://t.me/TGroupsIndexerBotGit).
 
-2. Create your PostgreSQL instance
+## Requirements
 
-   a. Get an instance hosted for free by ElephantSQL
+- Python **3.11**
+- PostgreSQL
+- A Telegram bot token created with [@BotFather](https://t.me/BotFather)
+- `pipenv`
 
-      1. Go to https://customer.elephantsql.com/signup
+The main Python dependencies are declared in [`Pipfile`](Pipfile) and locked in [`Pipfile.lock`](Pipfile.lock), including:
 
-      2. Enter your email address
+- `python-telegram-bot` with job queue support
+- `psycopg2-binary`
+- `pytz`
 
-      3. Check your inbox for a confirmation mail from ElephantSQL
+## Create a Telegram bot
 
-      4. Open the link contained in the confirmation mail to open the account creation page
+1. Open [@BotFather](https://t.me/BotFather)
+2. Send `/newbot`
+3. Choose the bot's display name and username
+4. Save the token returned by BotFather. It will be used as the `TOKEN` environment variable
+5. Open a direct chat with the new bot and send `/start` after deployment
 
-      5. Enter a password of your choosing and check the "Yes" checkbox to accept the Terms of Service
+Keep the token secret. If it is exposed, revoke it with BotFather and generate a new one.
 
-      6. Click the "Create Account" button
+## Set up PostgreSQL
 
-      7. Click the "Create New Instance" button and follow the instructions to name, set up and create your instance
+Create a PostgreSQL database using a local server or any compatible managed provider. Obtain a connection URI in this format:
 
-      8. Once created, go to the Instance Panel (https://customer.elephantsql.com/instance/) and access the instance
+```text
+postgresql://USER:PASSWORD@HOST:PORT/DATABASE
+```
 
-      9. In the instance details page, copy the postgres:// URL with the copy icon, that will be your DATABASE_URL value
-      
-### Set up a local running environment
+The application creates and updates the tables it needs at startup. The configured database user must therefore be able to create and alter tables, functions, and triggers in the selected database.
 
-1. Install python3 and python3-pip on your operating system
+## Configuration
 
-   - Windows (not tested)
+Create a `.env` file in the repository root. Pipenv loads it automatically when you use `pipenv run` or `pipenv shell`.
 
-     - Download Python3 from the [official website](https://www.python.org/downloads/windows/)
-     - Run the installer and follow the prompts to install Python3 on your system
-     - Open the Command Prompt and type `python3 -m ensurepip --upgrade` to install python3-pip
-   
-   - Debian-based GNU/Linux distributions
+```dotenv
+TOKEN=123456789:replace_with_your_bot_token
+DATABASE_URL=postgresql://user:password@localhost:5432/tgroupsindexerbot
+OWNER_CHAT_ID=123456789
+CONTACT_USERNAME=your_telegram_username
+EXCEPTION_LOG_CHAT_ID=-1001234567890
+ADMIN_ACTIONS_LOG_CHAT_ID=-1001234567890
+```
 
-     - Open the terminal and run the command `sudo apt update` to update the package lists
-     - Run the command `sudo apt install python3 python3-pip` to install Python3 and python3-pip
+### Environment variables
 
-   - Arch Linux
+| Variable | Required | Description |
+|---|---:|---|
+| `TOKEN` | Yes | Telegram bot token generated by BotFather. |
+| `DATABASE_URL` | Yes | PostgreSQL connection URI. Both `postgres://` and `postgresql://`-style URIs are accepted by the current parser. |
+| `OWNER_CHAT_ID` | Recommended | Numeric Telegram user ID of the instance owner. Owner-only commands depend on this value. |
+| `CONTACT_USERNAME` | Recommended | Telegram username shown by contact buttons, without the leading `@`. If omitted, the application falls back to `username`. |
+| `EXCEPTION_LOG_CHAT_ID` | No | Chat, group, or channel ID used for exception logs. The bot must be able to post there. |
+| `ADMIN_ACTIONS_LOG_CHAT_ID` | No | Chat, group, or channel ID used for administrative-action logs. The bot must be able to post there. |
 
-     - Open the terminal and run the command `sudo pacman -Syu` to update the package lists
-     - Run the command `sudo pacman -S python python-pip` to install Python3 and python3-pip
+> Never commit `.env`, bot tokens, database credentials, or private chat IDs to the repository.
 
-2. Clone this repository on your filesystem
+To obtain a numeric Telegram ID, you can start the bot and use `/id` in the relevant chat. For log channels or groups, add the bot and grant it permission to send messages.
 
-   a. Using `git`:
-    ```
-    git clone https://github.com/matypist/tgroupsindexerbot/
-    ```
-   
-   b. Downloading it as ZIP [[Mirror]](https://github.com/matypist/tgroupsindexerbot/archive/refs/heads/main.zip) and extracting it in a directory
+## Local installation
 
-3. Verify that python3 and python3-pip are correctly installed and functioning by running the `python3 -V` and `pip3 -V` commands respectively
+### 1. Clone the repository
 
-4. Open a terminal window or command prompt window and go to the local project root directory using the `cd` command followed by the directory path (e.g. `cd "C:\Users\matypist\Downloads\tgroupsindexerbot"`)
+```bash
+git clone https://github.com/matypist/tgroupsindexerbot.git
+cd tgroupsindexerbot
+```
 
-5. Run the `pip install pipenv` command to install pipenv, a tool required to create and manage a virtual environment containing this project's dependencies and environment variables 
+Alternatively, download and extract the [main branch archive](https://github.com/matypist/tgroupsindexerbot/archive/refs/heads/main.zip).
 
-6. Run the `pipenv install` command to install all the dependencies required for this project _(which, should you be interested, are specified in this project's Pipfile)_
+### 2. Install Python and Pipenv
 
-7. Create a file named `.env` on the local project root directory, with the two following lines:
-   ```
-   TOKEN=(your TOKEN value without parentheses)
-   DATABASE_URL=(your DATABASE_URL value without parentheses)
-   ```
-   
-   To define the environment variable values required for the bot functioning
+The project targets Python 3.11. Installation commands vary by operating system and package manager.
 
-   _**N.B.:** replace the values with the ones you got in the ["Prerequisites" section](https://github.com/matypist/tgroupsindexerbot#prerequisites)_
+#### Windows
 
-### Run
+1. Download Python 3.11 from the [official Python website](https://www.python.org/downloads/windows/)
+2. Run the installer and enable the option to add Python to `PATH`
+3. Open PowerShell or Command Prompt and verify the installation
 
-1. Open a terminal window or command prompt window and go to the project root directory using the `cd` command followed by the directory path (e.g. `cd "C:\Users\matypist\Downloads\tgroupsindexerbot"`)
+```powershell
+python --version
+python -m pip --version
+```
 
-2. Run the `pipenv shell` command to activate this project's virtual environment (previously set up in the ["Set up a local running environment" section](https://github.com/matypist/tgroupsindexerbot/blob/main/README.md#set-up-a-local-running-environment)) and load the environment variables
+4. Install Pipenv
 
-3. Run the `python main.py` command to finally run your bot instance
+```powershell
+python -m pip install --user pipenv
+```
 
-4. Start a chat with your bot instance on Telegram finding it through the username that you had previously chosen, e.g. via https://telegram.me/(your_bot_instance_username)
+Windows has not been tested.
+
+#### Debian and Ubuntu-based distributions
+
+Update the package lists and install Python, pip, and the tools commonly required to create virtual environments.
+
+```bash
+sudo apt update
+sudo apt install python3 python3-pip python3-venv
+python3 --version
+python3 -m pip --version
+python3 -m pip install --user pipenv
+```
+
+If your distribution does not provide Python 3.11 as its default `python3`, install a suitable Python 3.11 package for your release or use a Python version manager.
+
+#### Arch Linux and derivatives
+
+Update the system and install Python and pip.
+
+```bash
+sudo pacman -Syu
+sudo pacman -S python python-pip
+python --version
+python -m pip --version
+python -m pip install --user pipenv
+```
+
+On Arch Linux, `python` normally refers to Python 3. Use `python` in place of `python3` in the following commands if appropriate for your installation.
+
+#### Other operating systems
+
+Install Python 3.11 and pip using your operating system's supported package manager or the [official Python downloads](https://www.python.org/downloads/), then install Pipenv with the corresponding Python executable.
+
+### 3. Install dependencies
+
+```bash
+pipenv install --deploy
+```
+
+If you intentionally need to refresh the lock file, use `pipenv install` without `--deploy` and review the resulting dependency changes before committing them.
+
+### 4. Add the configuration
+
+Create `.env` in the repository root using the example in the [Configuration](#configuration) section.
+
+### 5. Run the bot
+
+```bash
+pipenv run python main.py
+```
+
+The bot uses long polling, so no public HTTP endpoint or webhook is required.
+
+## First-run checklist
+
+1. Confirm that PostgreSQL is reachable from the host running the bot
+2. Start the application and check that database initialization completes
+3. Send `/start` to the bot in a direct chat
+4. Set `OWNER_CHAT_ID` to your numeric Telegram user ID
+5. Optionally configure the exception and administrative-action log destinations
+6. Add the bot to a test group as an administrator
+7. Grant the permissions required to create or manage invite links and add members
+8. Run `/reload` in the group if its information does not appear immediately
+9. Use the bot's category browser to index the group
+
+## Commands
+
+The following commands are registered by the current application. Availability depends on whether the command is used in a private chat or group and on the user's role.
+
+### General
+
+- `/start` — open or refresh the bot interface
+- `/groups` — browse indexed groups
+- `/id` — display the current chat ID
+- `/dont` — send a “don't ask to ask” reminder
+- `/userstatus [user_id]` — display known roles and restrictions
+
+### Group administration
+
+- `/reload` — refresh the current group's metadata and indexing status
+
+### Bot administration
+
+- `/hide <chat_id> [chat_id ...]` — hide one or more groups from indexing
+- `/unhide <chat_id> [chat_id ...]` — allow hidden groups to be indexed again
+- `/move <chat_id> [chat_id ...] <directory_id>` — index or move groups to a category
+- `/unindex <chat_id> [chat_id ...]` — remove groups from their categories
+- `/restrict <user_id> <restriction>` — apply a user restriction
+- `/unrestrict <user_id> <restriction>` — remove a user restriction
+
+### Instance owner
+
+- `/addadmin <user_id>` — grant bot-administrator privileges
+- `/rmadmin <user_id>` — revoke bot-administrator privileges
+- `/listadmins` — list bot administrators
+
+The code also accepts several aliases, including `/index`, `/deindex`, `/bangroup`, `/unbangroup`, `/setadmin`, `/unsetadmin`, and `/removeadmin`.
+
+## Group permissions
+
+To index a group successfully:
+
+- the bot must be a member of the group;
+- the bot must be promoted to administrator;
+- the bot must be able to create or manage an invite link/add members, as supported by the group type and Telegram API;
+- the requesting user must have the appropriate group permissions;
+- the group must not be hidden by a bot administrator
+
+If the group is not listed for indexing, run `/reload` inside the group, refresh the list, and check the bot's permissions.
+
+## Internationalization
+
+Translations are stored in:
+
+```text
+tgib/i18n/en.json
+tgib/i18n/it.json
+```
+
+Locale loading and selection are implemented in `tgib/i18n/locales.py`. When adding a user-facing string, add the same key to every supported locale and preserve placeholders such as `[user]`, `[chat_id]`, and `[category]`.
+
+## Repository structure
+
+```text
+.
+├── main.py                         # Application entry point
+├── tgib/
+│   ├── data/database.py            # PostgreSQL access and schema setup
+│   ├── handlers/                   # Commands, messages, callbacks, status changes
+│   ├── i18n/                       # Locale loader and translation files
+│   ├── ui/menus.py                 # Telegram menus and keyboards
+│   ├── global_vars.py              # Runtime-wide references and counters
+│   └── logs.py                     # Local and Telegram logging
+├── _scripts/                       # Repository maintenance scripts
+├── .github/workflows/              # GitHub Actions workflows
+├── Pipfile                         # Dependency declarations
+├── Pipfile.lock                    # Locked dependency versions
+├── Procfile                        # Worker process declaration
+└── LICENSE                         # GNU AGPL v3 license text
+```
+
+## Deployment notes
+
+The included [`Procfile`](Procfile) declares a worker process:
+
+```text
+worker: python3 main.py
+```
+
+It can be used on platforms that support Procfile-based workers. Regardless of the platform, configure all required environment variables in the provider's secret/configuration interface and use persistent PostgreSQL storage.
+
+Because the application uses polling, run only the intended number of bot worker instances for a given token. Multiple polling processes using the same token can conflict.
+
+## Commit notifications for maintainers
+
+The workflow in `.github/workflows/notify-commits-to-telegram.yml` sends notifications for pushes to the `main` branch. To enable it in a fork, configure these GitHub Actions repository secrets:
+
+- `TELEGRAM_BOT_TOKEN`
+- `TELEGRAM_CHAT_ID`
+- `TELEGRAM_THREAD_ID` (when posting to a specific topic in a Telegram group with topics enabled)
+
+This automation is separate from the bot runtime and is not required for a self-hosted instance.
+
+## Troubleshooting
+
+### The bot does not start
+
+- Verify `TOKEN` and `DATABASE_URL`
+- Confirm that dependencies were installed from `Pipfile.lock`
+- Confirm that the runtime uses Python 3.11
+- Check PostgreSQL network access, credentials, and permissions
+
+### A group is missing from the indexing list
+
+- Ensure both the bot and the requesting user are administrators of the group
+- Check the bot's invite-link/member permissions
+- Run `/reload` in the group
+- Refresh the list in the bot interface
+- Confirm that the group has not been hidden by a bot administrator
+
+### Logging to Telegram fails
+
+- Verify the destination chat ID, including the `-100` prefix typically used by channels and supergroups
+- Ensure the bot is present and allowed to send messages
+- Leave the optional log variable unset if that log destination is not needed
+
+## Security and privacy
+
+A deployed instance stores Telegram identifiers and group metadata in PostgreSQL. Instance operators are responsible for:
+
+- protecting bot tokens, credentials, backups, and log destinations;
+- limiting database and administrator access;
+- informing users about applicable data handling and retention practices;
+- complying with Telegram's terms and applicable privacy law;
+- reviewing logs before sharing them, as they may contain user or chat identifiers
+
+Please report security-sensitive issues privately to the repository maintainer rather than publishing credentials or exploitable details in a public issue.
+
+## Contributing
+
+Issues and pull requests are welcome.
+
+Before submitting a change:
+
+1. Create a branch from `main`
+2. Keep changes focused and document any new environment variables or database changes
+3. Update both English and Italian locale files for user-facing text
+4. Test startup against a disposable PostgreSQL database and a test Telegram bot
+5. Do not commit secrets, `.env` files, database dumps, or personal data
+
+## License
+
+Copyright © 2022–2026 Matteo Collica (Matypist) and contributors.
+
+TGroupsIndexerBot is free software distributed under the [GNU Affero General Public License, version 3 or later](LICENSE). If you modify and provide the software to users over a network, review the source-availability obligations in the AGPL.
