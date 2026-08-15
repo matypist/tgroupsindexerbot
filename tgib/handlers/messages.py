@@ -1,4 +1,4 @@
-# Copyright (C) 2022-2023, Matteo Collica (Matypist)
+# Copyright (C) 2022-2026, Matteo Collica (Matypist)
 #
 # This file is part of the "Telegram Groups Indexer Bot" (TGroupsIndexerBot)
 # project, the original source of which is the following GitHub repository:
@@ -44,10 +44,33 @@ class Messages:
         if not is_user_data:
             return False
 
+        locale = Locale(user.language_code)
+
+        if user_data["is_admin"]:
+            from tgib.handlers.customlinks import CustomLinks
+            custom_link_result = CustomLinks.text(locale, chat_id, message.text)
+            if custom_link_result is not None:
+                new_message_text, new_reply_markup = custom_link_result
+                new_reply_markup = Queries.encode_queries(new_reply_markup)
+                new_message_id = SessionTable.get_active_session_menu_message_id(chat_id)
+                try:
+                    await context.bot.edit_message_text(text=new_message_text, chat_id=chat_id,
+                                                        message_id=new_message_id, reply_markup=new_reply_markup)
+                except Exception:
+                    new_message = await context.bot.send_message(chat_id=chat_id, text=new_message_text,
+                                                                 reply_markup=new_reply_markup)
+                    if chat_id in SessionTable.active_chat_sessions:
+                        SessionTable.update_session(chat_id, new_message.message_id)
+                    else:
+                        SessionTable.add_session(chat_id, new_message.message_id)
+                try:
+                    await context.bot.delete_message(chat_id=chat_id, message_id=message.message_id)
+                except Exception:
+                    pass
+                return True
+
         if chat_id not in Queries.user_input_subdirectories_data:
             return False
-
-        locale = Locale(user.language_code)
 
         if chat_id in Queries.user_input_subdirectories_data and user_data["is_admin"]:
             adding_categories_data = Queries.user_input_subdirectories_data[chat_id]

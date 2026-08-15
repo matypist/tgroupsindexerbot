@@ -8,10 +8,11 @@
   "i18n.en_flag":          "\uD83C\uDDEC\uD83C\uDDE7",
   "i18n.string_not_found": "String '[key]' not found",
 
-  "main_menu.text":                 "❔ What do you want to do next?",
-  "main_menu.explore_groups_btn":   "\uD83D\uDC65 Explore the groups",
-  "main_menu.add_bot_to_group_btn": "\uD83D\uDCA0 Add a group",
-  "main_menu.about_message_btn":    "ℹ️ About the bot",
+  "main_menu.text":                    "❔ What do you want to do next?",
+  "main_menu.explore_groups_btn":      "\uD83D\uDC65 Explore the groups",
+  "main_menu.add_bot_to_group_btn":    "\uD83D\uDCA0 Add a group",
+  "main_menu.manage_custom_links_btn": "\uD83D\uDD17 Manage custom links",
+  "main_menu.about_message_btn":       "ℹ️ About the bot",
 
   "about_menu.sapienzastudentsbot": [
     "\uD83E\uDE90 Telegram bot for indexing groups run by students at the university",
@@ -55,6 +56,7 @@
   "expired_session_menu.about_alert": "Sessions expire automatically each time the bot is updated (and consequently restarted) and in any case at least once within 24 hours",
 
   "explore_directories.index_group_here_btn":         "\uD83D\uDCA0 Index a new group here",
+  "explore_directories.index_link_here_btn":          "\uD83D\uDD17 Index a new link here",
   "explore_directories.create_subdirectory_here_btn": "\uD83D\uDCC2 Create a subcategory",
   "explore_directories.manage_directory_btn":         "⚙️️ Change category settings",
   "explore_directories.sub_directory.back_btn":       "◀️ Back",
@@ -357,5 +359,68 @@
   "edit_directory_names.successful_menu.first_line": "☑️ Successful update of category names:",
   "edit_directory_names.successful_menu.back_btn": "◀️ Go back to settings",
 
-  "create_subdirectory.error.too_long_input": "You entered a category name that is too long (as many [length] characters), try again with at most 100 characters!"
+  "create_subdirectory.error.too_long_input": "You entered a category name that is too long (as many [length] characters), try again with at most 100 characters!",
+
+  "manage_custom_links.text": [
+    "\uD83D\uDD17 <b>Custom links</b>",
+    "\n\nSelect a link to manage it, or add a new one."
+  ],
+  "manage_custom_links.add_btn": "➕ Add a new link",
+  "manage_custom_links.back_btn": "◀️ Back",
+  "manage_custom_links.edit_btn": "✏️ Edit link",
+  "manage_custom_links.delete_btn": "\uD83D\uDDD1 Delete link",
+  "manage_custom_links.cancel_btn": "◀️ Cancel",
+  "manage_custom_links.confirm_btn": "Yes, delete it ▶️",
+
+  "manage_custom_links.detail": [
+    "\uD83D\uDD17 <b>[label]</b>",
+    "\n\n<b>Italian label:</b> <code>[it_label]</code>",
+    "\n<b>English label:</b> <code>[en_label]</code>",
+    "\n<b>Target:</b> <code>[source]</code>",
+    "\n<b>Used in:</b> [categories_count] categories",
+    "\n<b>Display:</b> [display_mode]"
+  ],
+
+  "manage_custom_links.delete_confirm": [
+    "❓ Delete \"<b>[label]</b>\"?",
+    "\n\nIt is used in <b>[categories_count]</b> categories and will be removed from all of them."
+  ],
+
+  "manage_custom_links.ask_label": "✏️ Send the display label (maximum 100 characters).",
+  "manage_custom_links.ask_target": [
+    "\uD83D\uDD17 Send an HTTP/HTTPS URL, or <code>group: CHAT_ID</code> to bind the link",
+    " to a Telegram group and always use its current invite link."
+  ],
+  "manage_custom_links.invalid_label": "✋ The label must contain between 1 and 100 characters.",
+  "manage_custom_links.invalid_target": [
+    "✋ Send a valid HTTP/HTTPS URL or an existing group as <code>group: CHAT_ID</code>."
+  ],
+
+  "index_custom_link.text": [
+    "\uD83D\uDD17 Select a custom link to add to this category.",
+    " The same link may be used in multiple categories."
+  ],
+
+  "manage_custom_links.display_button": "category button",
+  "manage_custom_links.display_text": "groups-list text",
+  "manage_custom_links.show_as_button_btn": "\uD83D\uDD18 Show as a category button",
+  "manage_custom_links.show_as_text_btn": "\uD83D\uDCDD Show in the groups list",
+
+  "manage_custom_links.ask_it_default_label": [
+    "\uD83C\uDDEE\uD83C\uDDF9 Send the Italian display label. Since your bot language is Italian,",
+    " this will be the default label (maximum 100 characters)."
+  ],
+  "manage_custom_links.ask_en_default_label": [
+    "\uD83C\uDDEC\uD83C\uDDE7 Send the English display label. Since your bot language is not Italian,",
+    " this will be the default label (maximum 100 characters)."
+  ],
+  "manage_custom_links.ask_en_translation_label": [
+    "\uD83C\uDDEC\uD83C\uDDE7 Send the optional English translation.",
+    "\n\n<i>Default Italian label: \"<b>[default_label]</b>\"</i>"
+  ],
+  "manage_custom_links.ask_it_translation_label": [
+    "\uD83C\uDDEE\uD83C\uDDF9 Send the optional Italian translation.",
+    "\n\n<i>Default English label: \"<b>[default_label]</b>\"</i>"
+  ],
+  "manage_custom_links.skip_translation_btn": "⏭ Skip and reuse the default label"
 }

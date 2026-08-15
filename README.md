@@ -13,6 +13,7 @@ The project was originally created for the former **Sapienza Students** organiza
 - Add the bot to a group and request indexing in an appropriate category
 - Move or remove indexed groups, subject to the requesting user's permissions
 - Create, rename, hide, show, and delete categories through the bot interface
+- Add reusable custom links to categories through the bot-administration interface
 - Keep group metadata, administrators, ownership, invite links, and permissions synchronized
 - Hide groups from indexing when moderation is required
 - Manage bot administrators and per-user restrictions
@@ -222,6 +223,10 @@ The following commands are registered by the current application. Availability d
 - `/unindex <chat_id> [chat_id ...]` — remove groups from their categories
 - `/restrict <user_id> <restriction>` — apply a user restriction
 - `/unrestrict <user_id> <restriction>` — remove a user restriction
+
+### Custom-link administration
+
+Bot administrators can create localized custom links, add them to one or more categories, and choose whether they appear in the groups list or as category buttons. A link may point to a fixed HTTP/HTTPS URL or follow the current custom or invite link of an indexed Telegram group. Links can be removed from individual categories or deleted globally through the **Manage custom links** interface.
 
 ### Instance owner
 

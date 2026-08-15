@@ -1,4 +1,4 @@
-# Copyright (C) 2022-2023, Matteo Collica (Matypist)
+# Copyright (C) 2022-2026, Matteo Collica (Matypist)
 #
 # This file is part of the "Telegram Groups Indexer Bot" (TGroupsIndexerBot)
 # project, the original source of which is the following GitHub repository:
@@ -39,7 +39,9 @@ class Queries:
         "add_group_menu",
         "about_menu",
         "wip_alert",
-        "expired_session_about_alert"
+        "expired_session_about_alert",
+        "manage_custom_links",
+        "add_custom_link"
     ]
 
     registered_queries = {}
@@ -147,7 +149,9 @@ class Queries:
             admin_required_queries = (
                 "create_subdirectory_in", "edit_directory_names",
                 "manage_directory", "hide_directory", "unhide_directory",
-                "delete_directory", "delete_root_directory", "delete_nonempty_directory"
+                "delete_directory", "delete_root_directory", "delete_nonempty_directory",
+                "manage_custom_links", "add_custom_link", "custom_link", "edit_custom_link",
+                "toggle_custom_link_display", "skip_custom_link_translation", "delete_custom_link", "index_custom_link", "add_custom_link_here", "remove_custom_link"
             )
 
             for admin_required_query in admin_required_queries:
@@ -681,7 +685,10 @@ class Queries:
                     user_id=user_id
                 )
 
-                if is_groups_dict:
+                from tgib.data.database import CustomLinkTable
+                custom_links, is_custom_links = CustomLinkTable.get_directory_links(directory_id)
+
+                if is_groups_dict and is_custom_links:
                     groups_dict: dict
 
                     keyboard = []
@@ -722,6 +729,16 @@ class Queries:
                     else:
                         return Menus.get_error_menu(locale)
 
+                    for custom_link in custom_links.values():
+                        localized_link_lang_code = "it" if lang_code == "it" else "en"
+                        localized_link_label = custom_link.get(f"i18n_{localized_link_lang_code}_label") \
+                            or custom_link.get("i18n_en_label") or custom_link.get("i18n_it_label") \
+                            or custom_link["label"]
+
+                        if custom_link["display_as_button"]:
+                            keyboard.append([InlineKeyboardButton(text="🔗 " + localized_link_label,
+                                                                  url=custom_link["resolved_url"])])
+
                     if user_can_add_groups or user_can_modify_groups:
                         index_group_here_button_text = locale.get_string("explore_directories.index_group_here_btn")
 
@@ -730,6 +747,12 @@ class Queries:
 
                         keyboard.append([InlineKeyboardButton(text=index_group_here_button_text,
                                                               callback_data=index_group_here_callback_data)])
+
+                    if user_is_bot_admin:
+                        index_link_callback_data = f"index_custom_link_here{cls.fd}{directory_id}{cls.fd}0"
+                        Queries.register_query(index_link_callback_data)
+                        keyboard.append([InlineKeyboardButton(text=locale.get_string("explore_directories.index_link_here_btn"),
+                                                              callback_data=index_link_callback_data)])
 
                     if user_is_bot_admin:
                         create_subdirectory_button_text = locale.get_string("explore_directories.create_subdirectory_here_btn")
@@ -781,7 +804,7 @@ class Queries:
 
                         text += "\n"
 
-                    if len(groups_dict) > 0:
+                    if len(groups_dict) > 0 or len(custom_links) > 0:
                         date_str, time_str, offset_str = cls.get_current_italian_datetime()
 
                         text += "\n" + locale.get_string("explore_groups.category.generation_date_line")\
@@ -791,39 +814,46 @@ class Queries:
                     elif len(sub_directories_data) == 0:
                         text += "\n" + locale.get_string("explore_groups.category.no_groups")
 
-                    if len(sub_directories_data) > 0 and len(groups_dict) > 0:
+                    if len(sub_directories_data) > 0 and (len(groups_dict) > 0 or len(custom_links) > 0):
                         text += locale.get_string("explore_groups.category.no_category_groups_line")
 
                     listed_groups = 0
+                    entries = []
 
                     for group_chat_id, group_data_dict in groups_dict.items():
-                        if "custom_title" in group_data_dict and bool(group_data_dict["custom_title"]):
-                            group_title = group_data_dict["custom_title"]
-                        else:
-                            group_title = group_data_dict["title"]
-
-                        group_join_url = ""
-
-                        if "custom_link" in group_data_dict and bool(group_data_dict["custom_link"]):
-                            group_join_url = group_data_dict["custom_link"]
-                        elif "invite_link" in group_data_dict and bool(group_data_dict["invite_link"]):
-                            group_join_url = group_data_dict["invite_link"]
-
-                        if "hidden_by" in group_data_dict and bool(group_data_dict["hidden_by"]):
+                        group_title = group_data_dict["custom_title"] if group_data_dict.get("custom_title") else group_data_dict["title"]
+                        group_join_url = group_data_dict["custom_link"] if group_data_dict.get("custom_link") else group_data_dict.get("invite_link")
+                        if group_data_dict.get("hidden_by"):
                             bullet_char = "🚫"
-                        elif "missing_permissions" in group_data_dict and bool(group_data_dict["missing_permissions"]):
+                        elif group_data_dict.get("missing_permissions"):
                             bullet_char = "⛔️"
                         else:
                             bullet_char = "•"
-
                         if group_join_url:
-                            text += f"\n{bullet_char} {group_title} <a href='{group_join_url}'>" \
-                                    + locale.get_string("explore_groups.join_href_text") + "</a>"
-
+                            line = f"\n{bullet_char} {group_title} <a href='{group_join_url}'>" + locale.get_string("explore_groups.join_href_text") + "</a>"
                             if user_is_bot_admin:
-                                text += " {<code>" + str(group_chat_id) + "</code>}"
+                                line += " {<code>" + str(group_chat_id) + "</code>}"
+                            entries.append((group_title.casefold(), line))
 
-                            listed_groups += 1
+                    for custom_link in custom_links.values():
+                        localized_link_lang_code = "it" if lang_code == "it" else "en"
+                        localized_link_label = custom_link.get(f"i18n_{localized_link_lang_code}_label") \
+                            or custom_link.get("i18n_en_label") or custom_link.get("i18n_it_label") \
+                            or custom_link["label"]
+
+                        if not custom_link["display_as_button"]:
+                            line = f"\n🔗 {localized_link_label} <a href='{custom_link['resolved_url']}'>" + locale.get_string("explore_groups.join_href_text") + "</a>"
+                            entries.append((localized_link_label.casefold(), line))
+
+                        if user_is_bot_admin:
+                            remove_data = f"remove_custom_link{cls.fd}{custom_link['id']}{cls.fd}{directory_id}"
+                            Queries.register_query(remove_data)
+                            keyboard.append([InlineKeyboardButton(text="🗑 " + localized_link_label,
+                                                                  callback_data=remove_data)])
+
+                    for _, entry_line in sorted(entries, key=lambda entry: entry[0]):
+                        text += entry_line
+                        listed_groups += 1
 
                     if len(sub_directories_data) > 0:
                         if listed_groups > 0:
@@ -1151,7 +1181,23 @@ class Queries:
                                 text = locale.get_string("manage_directory.database_error")
 
                         elif query_data == "main_menu":
-                            text, reply_markup = Menus.get_main_menu(locale)
+                            text, reply_markup = Menus.get_main_menu(locale, user_data["is_admin"])
+
+                        elif query_data == "manage_custom_links" \
+                                or query_data == "add_custom_link" \
+                                or query_data.startswith(f"manage_custom_links{cls.fd}") \
+                                or query_data.startswith(f"custom_link{cls.fd}") \
+                                or query_data.startswith(f"edit_custom_link{cls.fd}") \
+                                or query_data.startswith(f"toggle_custom_link_display{cls.fd}") \
+                                or query_data.startswith(f"skip_custom_link_translation{cls.fd}") \
+                                or query_data.startswith(f"delete_custom_link_menu{cls.fd}") \
+                                or query_data.startswith(f"delete_custom_link{cls.fd}") \
+                                or query_data.startswith(f"index_custom_link_here{cls.fd}") \
+                                or query_data.startswith(f"index_custom_link_confirm{cls.fd}") \
+                                or query_data.startswith(f"add_custom_link_here{cls.fd}") \
+                                or query_data.startswith(f"remove_custom_link{cls.fd}"):
+                            from tgib.handlers.customlinks import CustomLinks
+                            text, reply_markup = CustomLinks.query(locale, user_id, query_data, query_args)
 
                         elif query_data == "add_group_menu":
                             text, reply_markup = Menus.get_add_group_menu(locale, bot.username)

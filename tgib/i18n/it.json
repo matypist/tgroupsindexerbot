@@ -8,10 +8,11 @@
   "i18n.en_flag":          "\uD83C\uDDEC\uD83C\uDDE7",
   "i18n.string_not_found": "Stringa '[key]' non trovata",
 
-  "main_menu.text":                 "❔ Cosa vuoi fare adesso?",
-  "main_menu.explore_groups_btn":   "\uD83D\uDC65 Esplora i gruppi",
-  "main_menu.add_bot_to_group_btn": "\uD83D\uDCA0 Aggiungi un gruppo",
-  "main_menu.about_message_btn":    "ℹ️ Riguardo il bot",
+  "main_menu.text":                    "❔ Cosa vuoi fare adesso?",
+  "main_menu.explore_groups_btn":      "\uD83D\uDC65 Esplora i gruppi",
+  "main_menu.add_bot_to_group_btn":    "\uD83D\uDCA0 Aggiungi un gruppo",
+  "main_menu.manage_custom_links_btn": "\uD83D\uDD17 Gestisci link personalizzati",
+  "main_menu.about_message_btn":       "ℹ️ Riguardo il bot",
 
   "about_menu.sapienzastudentsbot": [
     "\uD83E\uDE90 Bot Telegram per l'indicizzazione di gruppi gestiti da studenti e studentesse dell'ateneo",
@@ -55,6 +56,7 @@
   "expired_session_menu.about_alert": "Le sessioni scadono automaticamente ad ogni aggiornamento (e conseguente riavvio) del bot e comunque almeno una volta entro 24 ore",
 
   "explore_directories.index_group_here_btn":         "\uD83D\uDCA0 Indicizza un gruppo qui",
+  "explore_directories.index_link_here_btn":          "\uD83D\uDD17 Indicizza un nuovo link qui",
   "explore_directories.create_subdirectory_here_btn": "\uD83D\uDCC2 Crea una sotto-categoria",
   "explore_directories.manage_directory_btn":         "⚙️️ Modifica impostazioni categoria",
   "explore_directories.sub_directory.back_btn":       "◀️ Indietro",
@@ -358,5 +360,68 @@
   "edit_directory_names.successful_menu.first_line": "☑️ Aggiornamento avvenuto con successo:",
   "edit_directory_names.successful_menu.back_btn": "◀️ Torna alle impostazioni",
 
-  "create_subdirectory.error.too_long_input": "Hai inserito un nome di categoria troppo lungo (ben [length] caratteri), riprova con al massimo 100 caratteri!"
+  "create_subdirectory.error.too_long_input": "Hai inserito un nome di categoria troppo lungo (ben [length] caratteri), riprova con al massimo 100 caratteri!",
+
+  "manage_custom_links.text": [
+    "\uD83D\uDD17 <b>Link personalizzati</b>",
+    "\n\nSeleziona un link per gestirlo, oppure aggiungine uno nuovo."
+  ],
+  "manage_custom_links.add_btn": "➕ Aggiungi un nuovo link",
+  "manage_custom_links.back_btn": "◀️ Indietro",
+  "manage_custom_links.edit_btn": "✏️ Modifica link",
+  "manage_custom_links.delete_btn": "\uD83D\uDDD1 Elimina link",
+  "manage_custom_links.cancel_btn": "◀️ Annulla",
+  "manage_custom_links.confirm_btn": "Sì, eliminalo ▶️",
+
+  "manage_custom_links.detail": [
+    "\uD83D\uDD17 <b>[label]</b>",
+    "\n\n<b>Label italiano:</b> <code>[it_label]</code>",
+    "\n<b>Label inglese:</b> <code>[en_label]</code>",
+    "\n<b>Destinazione:</b> <code>[source]</code>",
+    "\n<b>Utilizzato in:</b> [categories_count] categorie",
+    "\n<b>Visualizzazione:</b> [display_mode]"
+  ],
+
+  "manage_custom_links.delete_confirm": [
+    "❓ Eliminare \"<b>[label]</b>\"?",
+    "\n\nÈ utilizzato in <b>[categories_count]</b> categorie e verrà rimosso da tutte."
+  ],
+
+  "manage_custom_links.ask_label": "✏️ Invia il label di visualizzazione (massimo 100 caratteri).",
+  "manage_custom_links.ask_target": [
+    "\uD83D\uDD17 Invia un URL HTTP/HTTPS, oppure <code>group: CHAT_ID</code> per legare il link",
+    " a un gruppo Telegram e usare sempre il suo link d'invito corrente."
+  ],
+  "manage_custom_links.invalid_label": "✋ Il label deve contenere da 1 a 100 caratteri.",
+  "manage_custom_links.invalid_target": [
+    "✋ Invia un URL HTTP/HTTPS valido oppure un gruppo esistente nel formato <code>group: CHAT_ID</code>."
+  ],
+
+  "index_custom_link.text": [
+    "\uD83D\uDD17 Seleziona un link personalizzato da aggiungere a questa categoria.",
+    " Lo stesso link può essere usato in più categorie."
+  ],
+
+  "manage_custom_links.display_button": "pulsante della categoria",
+  "manage_custom_links.display_text": "testo nella lista dei gruppi",
+  "manage_custom_links.show_as_button_btn": "\uD83D\uDD18 Mostra come pulsante della categoria",
+  "manage_custom_links.show_as_text_btn": "\uD83D\uDCDD Mostra nella lista dei gruppi",
+
+  "manage_custom_links.ask_it_default_label": [
+    "\uD83C\uDDEE\uD83C\uDDF9 Inserisci il label italiano. Poiché usi il bot in italiano,",
+    " sarà il label predefinito (massimo 100 caratteri)."
+  ],
+  "manage_custom_links.ask_en_default_label": [
+    "\uD83C\uDDEC\uD83C\uDDE7 Inserisci il label inglese. Poiché non usi il bot in italiano,",
+    " sarà il label predefinito (massimo 100 caratteri)."
+  ],
+  "manage_custom_links.ask_en_translation_label": [
+    "\uD83C\uDDEC\uD83C\uDDE7 Inserisci l'eventuale traduzione inglese.",
+    "\n\n<i>Label italiano predefinito: \"<b>[default_label]</b>\"</i>"
+  ],
+  "manage_custom_links.ask_it_translation_label": [
+    "\uD83C\uDDEE\uD83C\uDDF9 Inserisci l'eventuale traduzione italiana.",
+    "\n\n<i>Label inglese predefinito: \"<b>[default_label]</b>\"</i>"
+  ],
+  "manage_custom_links.skip_translation_btn": "⏭ Salta e riusa il label predefinito"
 }

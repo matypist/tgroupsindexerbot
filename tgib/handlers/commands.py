@@ -1,4 +1,4 @@
-# Copyright (C) 2022-2023, Matteo Collica (Matypist)
+# Copyright (C) 2022-2026, Matteo Collica (Matypist)
 #
 # This file is part of the "Telegram Groups Indexer Bot" (TGroupsIndexerBot)
 # project, the original source of which is the following GitHub repository:
@@ -134,7 +134,7 @@ class Commands:
             else:
                 if (is_user_data and Queries.user_can_perform_action(user_data, "/" + command_name)) or (not is_user_data):
                     if command_name == "start":
-                        text, reply_markup = Menus.get_main_menu(locale)
+                        text, reply_markup = Menus.get_main_menu(locale, user_data["is_admin"] if is_user_data else False)
 
                     elif command_name == "groups":
                         text, reply_markup = Queries.explore_category(locale, DirectoryTable.CATEGORIES_ROOT_DIR_ID, user_data)

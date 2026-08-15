@@ -1,4 +1,4 @@
-# Copyright (C) 2022-2023, Matteo Collica (Matypist)
+# Copyright (C) 2022-2026, Matteo Collica (Matypist)
 #
 # This file is part of the "Telegram Groups Indexer Bot" (TGroupsIndexerBot)
 # project, the original source of which is the following GitHub repository:
@@ -25,17 +25,21 @@ from tgib.i18n.locales import Locale
 
 class Menus:
     @classmethod
-    def get_main_menu(cls, locale: Locale) -> (str, InlineKeyboardMarkup):
+    def get_main_menu(cls, locale: Locale, user_is_bot_admin: bool = False) -> (str, InlineKeyboardMarkup):
         text = locale.get_string("main_menu.text")
 
         keyboard = [
             [InlineKeyboardButton(text=locale.get_string("main_menu.explore_groups_btn"),
                                   callback_data="explore_categories")],
             [InlineKeyboardButton(text=locale.get_string("main_menu.add_bot_to_group_btn"),
-                                  callback_data="add_group_menu")],
-            [InlineKeyboardButton(text=locale.get_string("main_menu.about_message_btn"),
-                                  callback_data="about_menu")]
+                                  callback_data="add_group_menu")]
         ]
+
+        if user_is_bot_admin:
+            keyboard.append([InlineKeyboardButton(text=locale.get_string("main_menu.manage_custom_links_btn"),
+                                                  callback_data="manage_custom_links")])
+
+        keyboard.append([InlineKeyboardButton(text=locale.get_string("main_menu.about_message_btn"), callback_data="about_menu")])
 
         return text, InlineKeyboardMarkup(keyboard)
 

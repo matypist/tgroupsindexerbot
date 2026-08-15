@@ -1,4 +1,4 @@
-# Copyright (C) 2022-2023, Matteo Collica (Matypist)
+# Copyright (C) 2022-2026, Matteo Collica (Matypist)
 #
 # This file is part of the "Telegram Groups Indexer Bot" (TGroupsIndexerBot)
 # project, the original source of which is the following GitHub repository:
@@ -259,6 +259,38 @@ class Database:
                         ALTER TABLE directory
                         ADD COLUMN hidden_by BIGINT REFERENCES account(chat_id)
                     """)
+
+                # custom_link
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS custom_link (
+                        id SERIAL PRIMARY KEY,
+                        label VARCHAR(100) NOT NULL,
+                        i18n_it_label VARCHAR(100),
+                        i18n_en_label VARCHAR(100),
+                        url TEXT,
+                        chat_id BIGINT,
+                        created_by BIGINT NOT NULL,
+                        created_at TIMESTAMP DEFAULT now(),
+                        display_as_button BOOLEAN DEFAULT false,
+                        FOREIGN KEY (chat_id) REFERENCES chat(chat_id) ON UPDATE CASCADE ON DELETE SET NULL,
+                        FOREIGN KEY (created_by) REFERENCES account(chat_id)
+                    );
+                    """
+                )
+
+                # custom_link_directory
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS custom_link_directory (
+                        link_id INT NOT NULL,
+                        directory_id INT NOT NULL,
+                        PRIMARY KEY (link_id, directory_id),
+                        FOREIGN KEY (link_id) REFERENCES custom_link(id) ON DELETE CASCADE,
+                        FOREIGN KEY (directory_id) REFERENCES directory(id) ON DELETE CASCADE
+                    );
+                    """
+                )
 
                 # session
                 cursor.execute(
@@ -1610,6 +1642,381 @@ class ChatTable:
 
         else:
             Logger.log("error", "ChatTable.fetch_chats", f"Couldn't get cursor required to fetch chats")
+
+
+class CustomLinkTable:
+    @classmethod
+    def add_link(cls, i18n_it_label: str, i18n_en_label: str, url: str | None,
+                 chat_id: int | None, created_by: int) -> (int | None, bool):
+        cursor, iscursor = Database.get_cursor()
+
+        if iscursor:
+            cursor: psycopg2._psycopg.cursor
+
+            try:
+                cursor.execute(
+                    """
+                    INSERT INTO custom_link
+                        (label, i18n_it_label, i18n_en_label, url, chat_id, created_by)
+                    VALUES (%s, %s, %s, %s, %s, %s)
+                    RETURNING id
+                    """,
+                    (i18n_it_label, i18n_it_label, i18n_en_label, url, chat_id, created_by)
+                )
+
+                custom_link_id = cursor.fetchone()[0]
+
+                Database.connection.commit()
+
+                return custom_link_id, True
+
+            except (Exception, psycopg2.DatabaseError) as ex:
+                Logger.log("exception", "CustomLinkTable.add_link",
+                           f"An exception occurred while trying to add a custom link", ex)
+
+                Database.connection.rollback()
+
+                return None, False
+
+        else:
+            Logger.log("error", "CustomLinkTable.add_link",
+                       f"Couldn't get cursor required to add a custom link")
+
+            return None, False
+
+    @classmethod
+    def update_link(cls, custom_link_id: int, i18n_it_label: str, i18n_en_label: str,
+                    url: str | None, chat_id: int | None) -> bool:
+        cursor, iscursor = Database.get_cursor()
+
+        if iscursor:
+            cursor: psycopg2._psycopg.cursor
+
+            try:
+                cursor.execute(
+                    """
+                    UPDATE custom_link
+                    SET label = %s,
+                        i18n_it_label = %s,
+                        i18n_en_label = %s,
+                        url = %s,
+                        chat_id = %s
+                    WHERE id = %s
+                    """,
+                    (i18n_it_label, i18n_it_label, i18n_en_label, url, chat_id, custom_link_id)
+                )
+
+                updated = cursor.rowcount == 1
+
+                Database.connection.commit()
+
+                return updated
+
+            except (Exception, psycopg2.DatabaseError) as ex:
+                Logger.log("exception", "CustomLinkTable.update_link",
+                           f"An exception occurred while trying to update custom link '{custom_link_id}'", ex)
+
+                Database.connection.rollback()
+
+                return False
+
+        else:
+            Logger.log("error", "CustomLinkTable.update_link",
+                       f"Couldn't get cursor required to update custom link '{custom_link_id}'")
+
+            return False
+
+    @classmethod
+    def set_display_as_button(cls, custom_link_id: int, display_as_button: bool) -> bool:
+        cursor, iscursor = Database.get_cursor()
+
+        if iscursor:
+            cursor: psycopg2._psycopg.cursor
+
+            try:
+                cursor.execute(
+                    "UPDATE custom_link SET display_as_button = %s WHERE id = %s",
+                    (display_as_button, custom_link_id)
+                )
+
+                updated = cursor.rowcount == 1
+
+                Database.connection.commit()
+
+                return updated
+
+            except (Exception, psycopg2.DatabaseError) as ex:
+                Logger.log("exception", "CustomLinkTable.set_display_as_button",
+                           f"An exception occurred while trying to update custom link '{custom_link_id}'", ex)
+
+                Database.connection.rollback()
+
+                return False
+
+        else:
+            Logger.log("error", "CustomLinkTable.set_display_as_button",
+                       f"Couldn't get cursor required to update custom link '{custom_link_id}'")
+
+            return False
+
+    @classmethod
+    def delete_link(cls, custom_link_id: int) -> bool:
+        cursor, iscursor = Database.get_cursor()
+
+        if iscursor:
+            cursor: psycopg2._psycopg.cursor
+
+            try:
+                cursor.execute("DELETE FROM custom_link WHERE id = %s", (custom_link_id,))
+
+                deleted = cursor.rowcount == 1
+
+                Database.connection.commit()
+
+                return deleted
+
+            except (Exception, psycopg2.DatabaseError) as ex:
+                Logger.log("exception", "CustomLinkTable.delete_link",
+                           f"An exception occurred while trying to delete custom link '{custom_link_id}'", ex)
+
+                Database.connection.rollback()
+
+                return False
+
+        else:
+            Logger.log("error", "CustomLinkTable.delete_link",
+                       f"Couldn't get cursor required to delete custom link '{custom_link_id}'")
+
+            return False
+
+    @classmethod
+    def add_to_directory(cls, custom_link_id: int, directory_id: int) -> bool:
+        cursor, iscursor = Database.get_cursor()
+
+        if iscursor:
+            cursor: psycopg2._psycopg.cursor
+
+            try:
+                cursor.execute(
+                    """
+                    INSERT INTO custom_link_directory (link_id, directory_id)
+                    VALUES (%s, %s)
+                    ON CONFLICT DO NOTHING
+                    """,
+                    (custom_link_id, directory_id)
+                )
+
+                Database.connection.commit()
+
+                return True
+
+            except (Exception, psycopg2.DatabaseError) as ex:
+                Logger.log("exception", "CustomLinkTable.add_to_directory",
+                           f"An exception occurred while trying to add custom link '{custom_link_id}' "
+                           f"to directory '{directory_id}'", ex)
+
+                Database.connection.rollback()
+
+                return False
+
+        else:
+            Logger.log("error", "CustomLinkTable.add_to_directory",
+                       f"Couldn't get cursor required to add custom link '{custom_link_id}' "
+                       f"to directory '{directory_id}'")
+
+            return False
+
+    @classmethod
+    def remove_from_directory(cls, custom_link_id: int, directory_id: int) -> bool:
+        cursor, iscursor = Database.get_cursor()
+
+        if iscursor:
+            cursor: psycopg2._psycopg.cursor
+
+            try:
+                cursor.execute(
+                    "DELETE FROM custom_link_directory WHERE link_id = %s AND directory_id = %s",
+                    (custom_link_id, directory_id)
+                )
+
+                deleted = cursor.rowcount == 1
+
+                Database.connection.commit()
+
+                return deleted
+
+            except (Exception, psycopg2.DatabaseError) as ex:
+                Logger.log("exception", "CustomLinkTable.remove_from_directory",
+                           f"An exception occurred while trying to remove custom link '{custom_link_id}' "
+                           f"from directory '{directory_id}'", ex)
+
+                Database.connection.rollback()
+
+                return False
+
+        else:
+            Logger.log("error", "CustomLinkTable.remove_from_directory",
+                       f"Couldn't get cursor required to remove custom link '{custom_link_id}' "
+                       f"from directory '{directory_id}'")
+
+            return False
+
+    @classmethod
+    def get_link(cls, custom_link_id: int) -> (dict | None, bool):
+        cursor, iscursor = Database.get_cursor()
+
+        if iscursor:
+            cursor: psycopg2._psycopg.cursor
+
+            try:
+                cursor.execute("SELECT * FROM custom_link WHERE id = %s", (custom_link_id,))
+
+                column_names = [desc[0] for desc in cursor.description]
+                record = cursor.fetchone()
+
+                if record:
+                    return dict(zip(column_names, record)), True
+
+                return None, False
+
+            except (Exception, psycopg2.DatabaseError) as ex:
+                Logger.log("exception", "CustomLinkTable.get_link",
+                           f"An exception occurred while trying to get custom link '{custom_link_id}'", ex)
+
+                Database.connection.rollback()
+
+                return None, False
+
+        else:
+            Logger.log("error", "CustomLinkTable.get_link",
+                       f"Couldn't get cursor required to get custom link '{custom_link_id}'")
+
+            return None, False
+
+    @classmethod
+    def get_links(cls, limit: int = 8, offset: int = 0) -> (dict | None, bool):
+        cursor, iscursor = Database.get_cursor()
+
+        if iscursor:
+            cursor: psycopg2._psycopg.cursor
+
+            try:
+                cursor.execute(
+                    """
+                    SELECT *, COUNT(*) OVER() AS total_count
+                    FROM custom_link
+                    ORDER BY LOWER(i18n_it_label), id
+                    LIMIT %s OFFSET %s
+                    """,
+                    (limit, offset)
+                )
+
+                column_names = [desc[0] for desc in cursor.description]
+                records = cursor.fetchall()
+
+                custom_links = Database.records_to_dict(column_names, records, "id")
+
+                return custom_links, True
+
+            except (Exception, psycopg2.DatabaseError) as ex:
+                Logger.log("exception", "CustomLinkTable.get_links",
+                           f"An exception occurred while trying to get custom links", ex)
+
+                Database.connection.rollback()
+
+                return None, False
+
+        else:
+            Logger.log("error", "CustomLinkTable.get_links",
+                       f"Couldn't get cursor required to get custom links")
+
+            return None, False
+
+    @classmethod
+    def get_categories_count(cls, custom_link_id: int) -> (int | None, bool):
+        cursor, iscursor = Database.get_cursor()
+
+        if iscursor:
+            cursor: psycopg2._psycopg.cursor
+
+            try:
+                cursor.execute(
+                    "SELECT COUNT(*) FROM custom_link_directory WHERE link_id = %s",
+                    (custom_link_id,)
+                )
+
+                return cursor.fetchone()[0], True
+
+            except (Exception, psycopg2.DatabaseError) as ex:
+                Logger.log("exception", "CustomLinkTable.get_categories_count",
+                           f"An exception occurred while trying to count the directories using "
+                           f"custom link '{custom_link_id}'", ex)
+
+                Database.connection.rollback()
+
+                return None, False
+
+        else:
+            Logger.log("error", "CustomLinkTable.get_categories_count",
+                       f"Couldn't get cursor required to count the directories using "
+                       f"custom link '{custom_link_id}'")
+
+            return None, False
+
+    @classmethod
+    def get_directory_links(cls, directory_id: int) -> (dict | None, bool):
+        cursor, iscursor = Database.get_cursor()
+
+        if iscursor:
+            cursor: psycopg2._psycopg.cursor
+
+            try:
+                cursor.execute(
+                    """
+                    SELECT custom_link.*,
+                           CASE WHEN custom_link.chat_id IS NULL
+                                THEN custom_link.url
+                                ELSE COALESCE(chat.custom_link, chat.invite_link)
+                           END AS resolved_url
+                    FROM custom_link
+                    INNER JOIN custom_link_directory
+                        ON custom_link_directory.link_id = custom_link.id
+                    LEFT JOIN chat
+                        ON chat.chat_id = custom_link.chat_id
+                    WHERE custom_link_directory.directory_id = %s
+                      AND (custom_link.chat_id IS NULL OR (
+                          chat.chat_id IS NOT NULL
+                          AND chat.hidden_by IS NULL
+                          AND chat.directory_id IS NOT NULL
+                          AND chat.missing_permissions = FALSE
+                          AND COALESCE(chat.custom_link, chat.invite_link) IS NOT NULL
+                      ))
+                    ORDER BY LOWER(custom_link.i18n_it_label), custom_link.id
+                    """,
+                    (directory_id,)
+                )
+
+                column_names = [desc[0] for desc in cursor.description]
+                records = cursor.fetchall()
+
+                custom_links = Database.records_to_dict(column_names, records, "id")
+
+                return custom_links, True
+
+            except (Exception, psycopg2.DatabaseError) as ex:
+                Logger.log("exception", "CustomLinkTable.get_directory_links",
+                           f"An exception occurred while trying to get custom links in "
+                           f"directory '{directory_id}'", ex)
+
+                Database.connection.rollback()
+
+                return None, False
+
+        else:
+            Logger.log("error", "CustomLinkTable.get_directory_links",
+                       f"Couldn't get cursor required to get custom links in directory '{directory_id}'")
+
+            return None, False
 
 
 class SessionTable:
