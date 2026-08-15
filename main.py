@@ -23,6 +23,7 @@ from os import getenv as os_getenv
 
 import pytz
 from telegram import __version__ as tg_ver
+from telegram import LinkPreviewOptions
 from telegram.constants import ParseMode
 from telegram.ext import Application, CallbackQueryHandler, Defaults, MessageHandler, filters, ChatMemberHandler
 
@@ -73,7 +74,13 @@ def main() -> None:
 
     Queries.register_fixed_queries()
 
-    defaults = Defaults(parse_mode=ParseMode.HTML, tzinfo=pytz.timezone('Europe/Rome'), disable_web_page_preview=True)
+    link_options = LinkPreviewOptions(is_disabled=True)
+
+    defaults = Defaults(
+        parse_mode=ParseMode.HTML,
+        tzinfo=pytz.timezone('Europe/Rome'),
+        link_preview_options=link_options
+    )
 
     application = Application.builder().token(os_getenv("TOKEN")).defaults(defaults).build()
     application: Application
