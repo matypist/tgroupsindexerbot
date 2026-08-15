@@ -70,6 +70,9 @@ class Commands:
 
             locale = Locale(update.effective_user.language_code)
 
+            from tgib.handlers.customlinks import CustomLinks
+            CustomLinks.input_data.pop(user_id, None)
+
             is_a_registered_command = (command_name in cls.registered_commands)
 
             if not is_a_registered_command:

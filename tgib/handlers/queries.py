@@ -1185,6 +1185,7 @@ class Queries:
 
                         elif query_data == "manage_custom_links" \
                                 or query_data == "add_custom_link" \
+                                or query_data == "cancel_custom_link_input" \
                                 or query_data.startswith(f"manage_custom_links{cls.fd}") \
                                 or query_data.startswith(f"custom_link{cls.fd}") \
                                 or query_data.startswith(f"edit_custom_link{cls.fd}") \

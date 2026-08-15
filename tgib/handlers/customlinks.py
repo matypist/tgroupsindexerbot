@@ -37,6 +37,13 @@ class CustomLinks:
         return InlineKeyboardButton(text=text, callback_data=data)
 
     @classmethod
+    def cancel_markup(cls, locale):
+        return InlineKeyboardMarkup([[
+            cls.button(locale.get_string("manage_custom_links.cancel_btn"),
+                       "cancel_custom_link_input")
+        ]])
+
+    @classmethod
     def localized_label(cls, locale, link):
         default_lang_code = "it" if locale.lang_code == "it" else "en"
         localized_key = f"i18n_{default_lang_code}_label"
@@ -98,7 +105,7 @@ class CustomLinks:
         if not is_custom_link_data:
             return cls.manage(locale, offset)
 
-        label = cls.localized_label(locale, link)
+        label = cls.localized_label(locale, custom_link_data)
         source = custom_link_data["url"] if custom_link_data["chat_id"] is None else f"Telegram group {custom_link_data['chat_id']}"
         display_mode = locale.get_string("manage_custom_links.display_button") \
             if custom_link_data["display_as_button"] else locale.get_string("manage_custom_links.display_text")
@@ -147,7 +154,7 @@ class CustomLinks:
 
     @classmethod
     def ask_for_target(cls, locale):
-        return locale.get_string("manage_custom_links.ask_target"), InlineKeyboardMarkup([])
+        return locale.get_string("manage_custom_links.ask_target"), cls.cancel_markup(locale)
 
     @classmethod
     def index_menu(cls, locale, directory_id, offset=0):
@@ -192,6 +199,11 @@ class CustomLinks:
     @classmethod
     def query(cls, locale, user_id, data, args):
         from tgib.handlers.queries import Queries
+
+        if data == "cancel_custom_link_input":
+            input_data = cls.input_data.pop(user_id, None)
+            offset = input_data.get("offset", 0) if input_data else 0
+            return cls.manage(locale, offset)
 
         if data == "manage_custom_links":
             return cls.manage(locale)
@@ -294,7 +306,7 @@ class CustomLinks:
 
         if input_data["step"] == "default_label":
             if not 0 < len(value) <= 100:
-                return locale.get_string("manage_custom_links.invalid_label"), InlineKeyboardMarkup([])
+                return locale.get_string("manage_custom_links.invalid_label"), cls.cancel_markup(locale)
 
             default_lang_code = input_data["default_lang_code"]
             translation_lang_code = input_data["translation_lang_code"]
@@ -305,12 +317,14 @@ class CustomLinks:
 
             return locale.get_string(prompt_key) \
                 .replace("[default_label]", value), InlineKeyboardMarkup([
-                    [cls.button(locale.get_string("manage_custom_links.skip_translation_btn"), skip_data)]
+                    [cls.button(locale.get_string("manage_custom_links.skip_translation_btn"), skip_data)],
+                    [cls.button(locale.get_string("manage_custom_links.cancel_btn"),
+                                "cancel_custom_link_input")]
                 ])
 
         if input_data["step"] == "translation_label":
             if not 0 < len(value) <= 100:
-                return locale.get_string("manage_custom_links.invalid_label"), InlineKeyboardMarkup([])
+                return locale.get_string("manage_custom_links.invalid_label"), cls.cancel_markup(locale)
 
             translation_lang_code = input_data["translation_lang_code"]
             input_data[f"i18n_{translation_lang_code}_label"] = value
@@ -322,20 +336,19 @@ class CustomLinks:
         url = None
         chat_id = None
 
-        if target.lower().startswith("group:"):
-            try:
-                chat_id = int(target.split(":", 1)[1].strip())
-            except ValueError:
-                return locale.get_string("manage_custom_links.invalid_target"), InlineKeyboardMarkup([])
+        try:
+            chat_id = int(target)
+        except ValueError:
+            chat_id = None
 
+        if chat_id is not None:
             if not ChatTable.get_chat_data(chat_id)[1]:
-                return locale.get_string("manage_custom_links.invalid_target"), InlineKeyboardMarkup([])
-
+                return locale.get_string("manage_custom_links.invalid_target"), cls.cancel_markup(locale)
         else:
             parsed = urlparse(target)
 
             if parsed.scheme not in ("http", "https") or not parsed.netloc:
-                return locale.get_string("manage_custom_links.invalid_target"), InlineKeyboardMarkup([])
+                return locale.get_string("manage_custom_links.invalid_target"), cls.cancel_markup(locale)
 
             url = target
 

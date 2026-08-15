@@ -388,12 +388,12 @@
 
   "manage_custom_links.ask_label": "✏️ Send the display label (maximum 100 characters).",
   "manage_custom_links.ask_target": [
-    "\uD83D\uDD17 Send an HTTP/HTTPS URL, or <code>group: CHAT_ID</code> to bind the link",
+    "\uD83D\uDD17 Send an HTTP/HTTPS URL, a numeric <code>CHAT_ID</code> to bind the link",
     " to a Telegram group and always use its current invite link."
   ],
   "manage_custom_links.invalid_label": "✋ The label must contain between 1 and 100 characters.",
   "manage_custom_links.invalid_target": [
-    "✋ Send a valid HTTP/HTTPS URL or an existing group as <code>group: CHAT_ID</code>."
+    "✋ Send a valid HTTP/HTTPS URL or the numeric <code>CHAT_ID</code> of an existing group."
   ],
 
   "index_custom_link.text": [
