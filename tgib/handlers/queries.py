@@ -19,6 +19,7 @@
 
 import hashlib
 from datetime import datetime
+from urllib.parse import urlparse as urllib_parse_urlparse
 
 import pytz
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, ChatMember, Bot, ChatMemberAdministrator, ChatMemberOwner, User
@@ -842,7 +843,16 @@ class Queries:
                             or custom_link["label"]
 
                         if not custom_link["display_as_button"]:
-                            line = f"\n🔗 {localized_link_label} <a href='{custom_link['resolved_url']}'>" + locale.get_string("explore_groups.join_href_text") + "</a>"
+                            resolved_url = custom_link["resolved_url"]
+                            parsed_url = urllib_parse_urlparse(resolved_url)
+                            telegram_hosts = {"t.me", "telegram.me", "telegram.dog"}
+                            is_telegram_link = custom_link["chat_id"] is not None \
+                                or parsed_url.scheme == "tg" \
+                                or (parsed_url.hostname or "").lower() in telegram_hosts
+                            action_key = "explore_groups.join_href_text" if is_telegram_link \
+                                else "explore_groups.open_href_text"
+                            line = f"\n{bullet_char} {localized_link_label} <a href='{resolved_url}'>" \
+                                + locale.get_string(action_key) + "</a>"
                             entries.append((localized_link_label.casefold(), line))
 
                         if user_is_bot_admin:

@@ -150,7 +150,7 @@ class CustomLinks:
 
         prompt_key = f"manage_custom_links.ask_{default_lang_code}_default_label"
 
-        return locale.get_string(prompt_key), InlineKeyboardMarkup([])
+        return locale.get_string(prompt_key), cls.cancel_markup(locale)
 
     @classmethod
     def ask_for_target(cls, locale):
@@ -171,7 +171,7 @@ class CustomLinks:
         links_list.sort(key=lambda link: cls.localized_label(locale, link).casefold())
 
         for link in links_list:
-            label = cls.localized_label(locale, custom_link_data)
+            label = cls.localized_label(locale, link)
             keyboard.append([cls.button("🔗 " + label,
                                         f"index_custom_link_confirm{Queries.fd}{link['id']}{Queries.fd}{directory_id}")])
 

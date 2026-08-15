@@ -63,6 +63,7 @@
   "explore_directories.back_to_menu_btn":             "◀️ Torna al menù",
 
   "explore_groups.join_href_text":                   "[ENTRA]",
+  "explore_groups.open_href_text":                   "[APRI]",
   "explore_groups.category.generation_date_line":    "<i>Lista di gruppi generata il [date] alle ore [time] (UTC+[offset]), controllare periodicamente per aggiornamenti</i>",
   "explore_groups.category.no_category_groups_line": "\nGruppi generali (senza sotto-categoria):\n",
   "explore_groups.category.sub_categories_line":     "\nSotto-categorie (pulsanti):",
