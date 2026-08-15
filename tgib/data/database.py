@@ -335,12 +335,23 @@ class Database:
             return None
 
     @classmethod
-    def records_to_dict(cls, column_names: list, records: list) -> dict:
+    def records_to_dict(cls, column_names: list, records: list,
+                        primary_key_column: str | None = None) -> dict:
         records_dict = {}
+
+        if primary_key_column is None:
+            primary_key_index = 0
+        else:
+            try:
+                primary_key_index = column_names.index(primary_key_column)
+            except ValueError as ex:
+                raise ValueError(
+                    f"Primary key column '{primary_key_column}' is not present in the query result"
+                ) from ex
 
         if records:
             for record in records:
-                primary_key_value = record[0]
+                primary_key_value = record[primary_key_index]
 
                 record_dict = cls.record_to_dict(column_names, record)
 
