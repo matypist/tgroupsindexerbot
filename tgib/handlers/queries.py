@@ -855,11 +855,6 @@ class Queries:
                                 + locale.get_string(action_key) + "</a>"
                             entries.append((localized_link_label.casefold(), line))
 
-                        if user_is_bot_admin:
-                            remove_data = f"remove_custom_link{cls.fd}{custom_link['id']}{cls.fd}{directory_id}"
-                            Queries.register_query(remove_data)
-                            keyboard.append([InlineKeyboardButton(text="🗑 " + localized_link_label,
-                                                                  callback_data=remove_data)])
 
                     for _, entry_line in sorted(entries, key=lambda entry: entry[0]):
                         text += entry_line
@@ -1206,9 +1201,10 @@ class Queries:
                                 or query_data.startswith(f"index_custom_link_here{cls.fd}") \
                                 or query_data.startswith(f"index_custom_link_confirm{cls.fd}") \
                                 or query_data.startswith(f"add_custom_link_here{cls.fd}") \
-                                or query_data.startswith(f"remove_custom_link{cls.fd}"):
+                                or query_data.startswith(f"remove_custom_link_menu{cls.fd}") \
+                                or query_data.startswith(f"remove_custom_link_confirm{cls.fd}"):
                             from tgib.handlers.customlinks import CustomLinks
-                            text, reply_markup = CustomLinks.query(locale, user_id, query_data, query_args)
+                            text, reply_markup = await CustomLinks.query(locale, user, query_data, query_args)
 
                         elif query_data == "add_group_menu":
                             text, reply_markup = Menus.get_add_group_menu(locale, bot.username)

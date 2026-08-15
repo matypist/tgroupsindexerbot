@@ -398,6 +398,9 @@
     "✋ Invia un URL HTTP/HTTPS valido oppure il <code>CHAT_ID</code> numerico di un gruppo esistente."
   ],
 
+  "index_custom_link.remove_confirm": "❓ Rimuovere “<b>[label]</b>” da questa categoria? Il link non verrà eliminato.",
+  "index_custom_link.remove_confirm_btn": "Sì, rimuovilo ▶️",
+
   "index_custom_link.text": [
     "\uD83D\uDD17 Seleziona un link personalizzato da aggiungere a questa categoria.",
     " Lo stesso link può essere usato in più categorie."

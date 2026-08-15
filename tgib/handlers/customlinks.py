@@ -21,7 +21,8 @@ from urllib.parse import urlparse
 
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 
-from tgib.data.database import ChatTable, CustomLinkTable
+from tgib.data.database import ChatTable, CustomLinkTable, DirectoryTable
+from tgib.logs import Logger
 
 
 class CustomLinks:
@@ -166,14 +167,23 @@ class CustomLinks:
         if not is_custom_links:
             return locale.get_string("database_error_menu.text"), InlineKeyboardMarkup([])
 
+        directory_links, is_directory_links = CustomLinkTable.get_directory_links(directory_id)
+        if not is_directory_links:
+            return locale.get_string("database_error_menu.text"), InlineKeyboardMarkup([])
+
+        linked_ids = set(directory_links.keys())
         links_list = list(custom_links.values())
         total = links_list[0]["total_count"] if links_list else 0
         links_list.sort(key=lambda link: cls.localized_label(locale, link).casefold())
 
         for link in links_list:
+            link_id = link["id"]
             label = cls.localized_label(locale, link)
-            keyboard.append([cls.button("🔗 " + label,
-                                        f"index_custom_link_confirm{Queries.fd}{link['id']}{Queries.fd}{directory_id}")])
+            is_linked = link_id in linked_ids
+            icon = "✅" if is_linked else "⬜"
+            action = "remove_custom_link_menu" if is_linked else "index_custom_link_confirm"
+            keyboard.append([cls.button(f"{icon} {label}",
+                                        f"{action}{Queries.fd}{link_id}{Queries.fd}{directory_id}{Queries.fd}{offset}")])
 
         navigation = []
 
@@ -197,8 +207,10 @@ class CustomLinks:
         return locale.get_string("index_custom_link.text"), InlineKeyboardMarkup(keyboard)
 
     @classmethod
-    def query(cls, locale, user_id, data, args):
+    async def query(cls, locale, user, data, args):
         from tgib.handlers.queries import Queries
+
+        user_id = user.id
 
         if data == "cancel_custom_link_input":
             input_data = cls.input_data.pop(user_id, None)
@@ -272,26 +284,47 @@ class CustomLinks:
             return cls.index_menu(locale, int(args[0]), int(args[1]))
 
         if data.startswith(f"index_custom_link_confirm{Queries.fd}"):
-            CustomLinkTable.add_to_directory(int(args[0]), int(args[1]))
+            link_id, directory_id = int(args[0]), int(args[1])
+            offset = int(args[2]) if len(args) > 2 else 0
+            if CustomLinkTable.add_to_directory(link_id, directory_id):
+                await cls.log_directory_assignment("index_link", user, link_id, directory_id)
+            return cls.index_menu(locale, directory_id, offset)
 
-            return Queries.cd_queries_handler(int(args[1]), locale, {
-                "chat_id": user_id,
-                "is_admin": True,
-                "can_view_groups": True,
-                "can_add_groups": True,
-                "can_modify_groups": True
-            })
+        if data.startswith(f"remove_custom_link_menu{Queries.fd}"):
+            link_id, directory_id = int(args[0]), int(args[1])
+            offset = int(args[2]) if len(args) > 2 else 0
+            custom_link_data, is_custom_link_data = CustomLinkTable.get_link(link_id)
+            if not is_custom_link_data:
+                return cls.index_menu(locale, directory_id, offset)
+            label = cls.localized_label(locale, custom_link_data)
+            text = locale.get_string("index_custom_link.remove_confirm").replace("[label]", label)
+            return text, InlineKeyboardMarkup([
+                [cls.button(locale.get_string("index_custom_link.remove_confirm_btn"),
+                            f"remove_custom_link_confirm{Queries.fd}{link_id}{Queries.fd}{directory_id}{Queries.fd}{offset}")],
+                [cls.button(locale.get_string("manage_custom_links.cancel_btn"),
+                            f"index_custom_link_here{Queries.fd}{directory_id}{Queries.fd}{offset}")]
+            ])
 
-        if data.startswith(f"remove_custom_link{Queries.fd}"):
-            CustomLinkTable.remove_from_directory(int(args[0]), int(args[1]))
+        if data.startswith(f"remove_custom_link_confirm{Queries.fd}"):
+            link_id, directory_id = int(args[0]), int(args[1])
+            offset = int(args[2]) if len(args) > 2 else 0
+            if CustomLinkTable.remove_from_directory(link_id, directory_id):
+                await cls.log_directory_assignment("unindex_link", user, link_id, directory_id)
+            return cls.index_menu(locale, directory_id, offset)
 
-            return Queries.cd_queries_handler(int(args[1]), locale, {
-                "chat_id": user_id,
-                "is_admin": True,
-                "can_view_groups": True,
-                "can_add_groups": True,
-                "can_modify_groups": True
-            })
+    @classmethod
+    async def log_directory_assignment(cls, action, admin, link_id, directory_id):
+        link_data, is_link_data = CustomLinkTable.get_link(link_id)
+        directory_data, is_directory_data = DirectoryTable.get_directory_data(directory_id)
+        if not is_link_data or not is_directory_data:
+            return False
+        label = link_data.get("i18n_it_label") or link_data.get("i18n_en_label") or str(link_id)
+        directory_name = directory_data.get("i18n_it_name") or directory_data.get("i18n_en_name") or str(directory_id)
+        target = link_data.get("url") or f"Telegram group {link_data.get('chat_id')}"
+        summary = (f"🔗 <b>{label}</b> [<code>{link_id}</code>]"
+                   f"\n📂 <b>{directory_name}</b> [<code>{directory_id}</code>]"
+                   f"\n🌐 <code>{target}</code>")
+        return await Logger.log_user_action(action, admin, summary)
 
     @classmethod
     def text(cls, locale, user_id, value):
