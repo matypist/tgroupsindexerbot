@@ -388,6 +388,7 @@
     "\n\nÈ utilizzato in <b>[categories_count]</b> categorie e verrà rimosso da tutte."
   ],
 
+  "manage_custom_links.current_value": "<b>Valore corrente:</b> <code>[current_value]</code>",
   "manage_custom_links.ask_label": "✏️ Invia il label di visualizzazione (massimo 100 caratteri).",
   "manage_custom_links.ask_target": [
     "\uD83D\uDD17 Invia un URL HTTP/HTTPS, un <code>CHAT_ID</code> numerico per legare il link",

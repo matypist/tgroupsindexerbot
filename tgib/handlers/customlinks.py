@@ -139,6 +139,12 @@ class CustomLinks:
     def start(cls, locale, user_id, link_id=None, offset=0, directory_id=None):
         default_lang_code = "it" if locale.lang_code == "it" else "en"
         translation_lang_code = "en" if default_lang_code == "it" else "it"
+        old_link_data = None
+
+        if link_id is not None:
+            old_link_data, is_old_link_data = CustomLinkTable.get_link(link_id)
+            if not is_old_link_data:
+                return cls.manage(locale, offset)
 
         cls.input_data[user_id] = {
             "step": "default_label",
@@ -146,16 +152,27 @@ class CustomLinks:
             "translation_lang_code": translation_lang_code,
             "link_id": link_id,
             "offset": offset,
-            "directory_id": directory_id
+            "directory_id": directory_id,
+            "old_link_data": old_link_data
         }
 
         prompt_key = f"manage_custom_links.ask_{default_lang_code}_default_label"
+        text = locale.get_string(prompt_key)
+        if old_link_data:
+            text += "\n\n" + locale.get_string("manage_custom_links.current_value") \
+                .replace("[current_value]", old_link_data[f"i18n_{default_lang_code}_label"])
 
-        return locale.get_string(prompt_key), cls.cancel_markup(locale)
+        return text, cls.cancel_markup(locale)
 
     @classmethod
-    def ask_for_target(cls, locale):
-        return locale.get_string("manage_custom_links.ask_target"), cls.cancel_markup(locale)
+    def ask_for_target(cls, locale, old_link_data=None):
+        text = locale.get_string("manage_custom_links.ask_target")
+        if old_link_data:
+            current_target = old_link_data["url"] if old_link_data["chat_id"] is None \
+                else str(old_link_data["chat_id"])
+            text += "\n\n" + locale.get_string("manage_custom_links.current_value") \
+                .replace("[current_value]", current_target)
+        return text, cls.cancel_markup(locale)
 
     @classmethod
     def index_menu(cls, locale, directory_id, offset=0):
@@ -237,7 +254,7 @@ class CustomLinks:
                 input_data[f"i18n_{input_data['translation_lang_code']}_label"] = default_label
                 input_data["step"] = "target"
 
-                return cls.ask_for_target(locale)
+                return cls.ask_for_target(locale, input_data.get("old_link_data"))
 
             return cls.manage(locale)
 
@@ -349,12 +366,17 @@ class CustomLinks:
             skip_data = f"skip_custom_link_translation{Queries.fd}{input_data['offset']}"
             prompt_key = f"manage_custom_links.ask_{translation_lang_code}_translation_label"
 
-            return locale.get_string(prompt_key) \
-                .replace("[default_label]", value), InlineKeyboardMarkup([
-                    [cls.button(locale.get_string("manage_custom_links.skip_translation_btn"), skip_data)],
-                    [cls.button(locale.get_string("manage_custom_links.cancel_btn"),
-                                "cancel_custom_link_input")]
-                ])
+            text = locale.get_string(prompt_key).replace("[default_label]", value)
+            old_link_data = input_data.get("old_link_data")
+            if old_link_data:
+                text += "\n\n" + locale.get_string("manage_custom_links.current_value") \
+                    .replace("[current_value]", old_link_data[f"i18n_{translation_lang_code}_label"])
+
+            return text, InlineKeyboardMarkup([
+                [cls.button(locale.get_string("manage_custom_links.skip_translation_btn"), skip_data)],
+                [cls.button(locale.get_string("manage_custom_links.cancel_btn"),
+                            "cancel_custom_link_input")]
+            ])
 
         if input_data["step"] == "translation_label":
             if not 0 < len(value) <= 100:
@@ -364,7 +386,7 @@ class CustomLinks:
             input_data[f"i18n_{translation_lang_code}_label"] = value
             input_data["step"] = "target"
 
-            return cls.ask_for_target(locale)
+            return cls.ask_for_target(locale, input_data.get("old_link_data"))
 
         target = value
         url = None
@@ -404,10 +426,27 @@ class CustomLinks:
         if not is_custom_link_updated:
             return locale.get_string("database_error_menu.text"), InlineKeyboardMarkup([])
 
-        link_summary = (f"🔗 <b>{input_data['i18n_it_label']}</b> [<code>{link_id}</code>]"
-                        f"\n🇬🇧 {input_data['i18n_en_label']}"
-                        f"\n🌐 <code>{url or ('Telegram group ' + str(chat_id))}</code>")
-        await Logger.log_custom_link_action("create_link" if is_new_link else "edit_link",
+        new_target = url if url is not None else f"Telegram chat [{chat_id}]"
+        if is_new_link:
+            link_summary = (f"🆔 {link_id}"
+                            f"\n\n🇮🇹 {input_data['i18n_it_label']}"
+                            f"\n\n🇬🇧 {input_data['i18n_en_label']}"
+                            f"\n\n🌐 {new_target}")
+        else:
+            old_link_data = input_data["old_link_data"]
+            old_target = old_link_data["url"] if old_link_data["url"] is not None \
+                else f"Telegram chat [{old_link_data['chat_id']}]"
+            link_summary = f"🆔 {link_id}"
+
+            for icon, old_value, new_value in (
+                    ("🇮🇹", old_link_data["i18n_it_label"], input_data["i18n_it_label"]),
+                    ("🇬🇧", old_link_data["i18n_en_label"], input_data["i18n_en_label"]),
+                    ("🌐", old_target, new_target)):
+                link_summary += f"\n\n{icon} {old_value}"
+                if old_value != new_value:
+                    link_summary += f"\n      ↪️ {new_value}"
+
+        await Logger.log_custom_link_action("create link" if is_new_link else "edit link",
                                             user, link_summary)
 
         if directory_id is not None:

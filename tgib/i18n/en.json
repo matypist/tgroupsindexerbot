@@ -387,6 +387,7 @@
     "\n\nIt is used in <b>[categories_count]</b> categories and will be removed from all of them."
   ],
 
+  "manage_custom_links.current_value": "<b>Current value:</b> <code>[current_value]</code>",
   "manage_custom_links.ask_label": "✏️ Send the display label (maximum 100 characters).",
   "manage_custom_links.ask_target": [
     "\uD83D\uDD17 Send an HTTP/HTTPS URL, a numeric <code>CHAT_ID</code> to bind the link",
