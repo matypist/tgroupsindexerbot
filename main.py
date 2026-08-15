@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# Copyright (C) 2022-2023, Matteo Collica (Matypist)
+# Copyright (C) 2022-2026, Matteo Collica (Matypist)
 #
 # This file is part of the "Telegram Groups Indexer Bot" (TGroupsIndexerBot)
 # project, the original source of which is the following GitHub repository:
@@ -35,7 +35,6 @@ from tgib.handlers.commands import Commands
 from tgib.handlers.queries import Queries
 from tgib.i18n.locales import Locale
 from tgib.logs import Logger
-from tgib.urlooking.github import GitHubMonitor
 
 try:
     from telegram import __version_info__
@@ -91,8 +90,6 @@ def main() -> None:
 
     application.job_queue.run_once(callback=ChatTable.fetch_chats, when=0, data=application.bot)
 
-    GitHubMonitor.init(application.bot)
-
     GlobalVariables.set_accounts_count(AccountTable.get_account_records_count())
 
     GlobalVariables.bot_owner = os_getenv("OWNER_CHAT_ID")
@@ -105,12 +102,6 @@ def main() -> None:
 
     if not GlobalVariables.contact_username:
         GlobalVariables.contact_username = "username"
-
-    application.job_queue.run_repeating(
-        callback=GitHubMonitor.look_for_updates,
-        interval=GitHubMonitor.interval,
-        first=1
-    )
 
     application.run_polling()
 

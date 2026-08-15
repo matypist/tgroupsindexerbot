@@ -6,7 +6,6 @@ name = "pypi"
 [packages]
 python-telegram-bot = {version = ">=v20.0", extras = ["job-queue"]}
 psycopg2-binary = "*"
-feedparser = "*"
 pytz = "*"
 
 [dev-packages]
