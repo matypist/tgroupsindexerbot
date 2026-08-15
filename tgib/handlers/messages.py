@@ -48,7 +48,7 @@ class Messages:
 
         if user_data["is_admin"]:
             from tgib.handlers.customlinks import CustomLinks
-            custom_link_result = CustomLinks.text(locale, chat_id, message.text)
+            custom_link_result = await CustomLinks.text(locale, user, message.text)
             if custom_link_result is not None:
                 new_message_text, new_reply_markup = custom_link_result
                 new_reply_markup = Queries.encode_queries(new_reply_markup)

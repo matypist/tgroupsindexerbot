@@ -820,6 +820,7 @@ class Queries:
 
                     listed_groups = 0
                     entries = []
+                    bullet_char = "•"
 
                     for group_chat_id, group_data_dict in groups_dict.items():
                         group_title = group_data_dict["custom_title"] if group_data_dict.get("custom_title") else group_data_dict["title"]

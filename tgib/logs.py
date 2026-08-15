@@ -132,6 +132,17 @@ class Logger:
             return await cls.log_to_telegram_channel(cls.admin_actions_log_chat_id, text)
 
     @classmethod
+    async def log_custom_link_action(cls, action: str, admin: User, changes_summary: str) -> bool:
+        if not cls.admin_actions_log_chat_id:
+            return False
+
+        text = "👮‍♂️ <b><u>" + action.upper() + "</u></b> (#admin)"
+        text += "\n\n✍️ " + cls.gen_user_info_string(admin)
+        text += "\n\n" + changes_summary
+
+        return await cls.log_to_telegram_channel(cls.admin_actions_log_chat_id, text)
+
+    @classmethod
     async def log_directory_visibility_action(cls, action: str, admin: User, directory_data_summary: str) -> bool:
         if cls.admin_actions_log_chat_id:
             text = "👮‍♂️ <b><u>" + action.upper() + f"</u></b> (#admin)"

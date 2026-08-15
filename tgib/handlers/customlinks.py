@@ -324,12 +324,13 @@ class CustomLinks:
         summary = (f"🔗 <b>{label}</b> [<code>{link_id}</code>]"
                    f"\n📂 <b>{directory_name}</b> [<code>{directory_id}</code>]"
                    f"\n🌐 <code>{target}</code>")
-        return await Logger.log_user_action(action, admin, summary)
+        return await Logger.log_custom_link_action(action, admin, summary)
 
     @classmethod
-    def text(cls, locale, user_id, value):
+    async def text(cls, locale, user, value):
         from tgib.handlers.queries import Queries
 
+        user_id = user.id
         input_data = cls.input_data.get(user_id)
 
         if not input_data:
@@ -385,7 +386,8 @@ class CustomLinks:
 
             url = target
 
-        if input_data["link_id"] is None:
+        is_new_link = input_data["link_id"] is None
+        if is_new_link:
             link_id, is_custom_link_updated = CustomLinkTable.add_link(
                 input_data["i18n_it_label"], input_data["i18n_en_label"], url, chat_id, user_id
             )
@@ -402,8 +404,15 @@ class CustomLinks:
         if not is_custom_link_updated:
             return locale.get_string("database_error_menu.text"), InlineKeyboardMarkup([])
 
+        link_summary = (f"🔗 <b>{input_data['i18n_it_label']}</b> [<code>{link_id}</code>]"
+                        f"\n🇬🇧 {input_data['i18n_en_label']}"
+                        f"\n🌐 <code>{url or ('Telegram group ' + str(chat_id))}</code>")
+        await Logger.log_custom_link_action("create_link" if is_new_link else "edit_link",
+                                            user, link_summary)
+
         if directory_id is not None:
-            CustomLinkTable.add_to_directory(link_id, directory_id)
+            if CustomLinkTable.add_to_directory(link_id, directory_id):
+                await cls.log_directory_assignment("index_link", user, link_id, directory_id)
 
             return Queries.cd_queries_handler(directory_id, locale, {
                 "chat_id": user_id,
